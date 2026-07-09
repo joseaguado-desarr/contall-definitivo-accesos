@@ -1,0 +1,209 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                    ✅ CORREPCIONES DE AUTENTICACIÓN                             ║
+║                   Access Control Hub - Sistema de Login                         ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+📌 PROBLEMAS IDENTIFICADOS Y RESUELTOS:
+
+1. ❌ VITE_API_URL → URL DE SERVIDOR INCORRECTA
+   ├─ Problema: Apuntaba a puerto 3000 pero servidor en puerto 8081
+   ├─ Ubicación: .env
+   └─ Solución: Cambiar a /api para usar proxy de Vite ✅
+
+2. ❌ CORS NO CONFIGURADO
+   ├─ Problema: Restricciones de CORS bloqueaban las solicitudes
+   ├─ Ubicación: server/index.js
+   └─ Solución: Agregar CORS explícito con orígenes permitidos ✅
+
+3. ❌ ENDPOINT /auth/login FRÁGIL
+   ├─ Problema: Usaba JOINs internos que fallaban con datos incompletos
+   ├─ Ubicación: server/routes/auth.js
+   └─ Solución: Refactorizar con queries separadas y validaciones ✅
+
+4. ❌ ERRORES GENÉRICOS SIN INFORMACIÓN
+   ├─ Problema: Mensajes de error no ayudaban a debugging
+   ├─ Ubicación: server/routes/auth.js y src/lib/api-client.ts
+   └─ Solución: Agregar logging detallado ✅
+
+5. ❌ API CLIENT CON MANEJO DÉBIL DE ERRORES
+   ├─ Problema: No manejaba bien respuestas inválidas
+   ├─ Ubicación: src/lib/api-client.ts
+   └─ Solución: Mejorar parsing de errores y logging ✅
+
+════════════════════════════════════════════════════════════════════════════════
+
+📁 ARCHIVOS MODIFICADOS:
+
+  File: .env
+  ├─ Cambio: VITE_API_URL="/api" (antes: "http://localhost:3000/api")
+  └─ Efecto: El cliente ahora usa el proxy correcto de Vite
+
+  File: server/index.js
+  ├─ Cambio: Agregado CORS explícito con configuración
+  └─ Efecto: Se permite CORS desde navegador local
+
+  File: server/routes/auth.js (Endpoint POST /auth/login)
+  ├─ Cambio: Refactorizado con queries separadas en vez de JOINs
+  ├─ Cambio: Agregadas validaciones de entrada (email y password)
+  ├─ Cambio: Mejor logging para debugging
+  └─ Efecto: Endpoint más robusto y confiable
+
+  File: src/lib/api-client.ts
+  ├─ Cambio: Mejorado parsing de errores
+  ├─ Cambio: Mejor manejo de tipos de respuesta
+  └─ Efecto: Errores más claros en consola
+
+  File: src/hooks/useAuth.tsx
+  ├─ Cambio: Agregado campo 'error'
+  └─ Efecto: Mejor tracking de errores
+
+════════════════════════════════════════════════════════════════════════════════
+
+🆕 ARCHIVOS NUEVOS CREADOS:
+
+  📄 server/verify-db.js
+  ├─ Propósito: Verificar integridad de la base de datos
+  ├─ Uso: node server/verify-db.js
+  └─ Verifica: Conexión, tablas, usuarios, perfiles, roles y relaciones
+
+  📄 server/test-login.js
+  ├─ Propósito: Probar endpoint de login sin UI
+  ├─ Uso: node server/test-login.js <email> <password>
+  ├─ Ejemplo: node server/test-login.js admin@contaall.com contaall
+  └─ Resultado: JSON con token si es exitoso, error si falla
+
+  📄 CORRECCIONES_AUTENTICACION.md
+  └─ Documentación completa de cambios
+
+════════════════════════════════════════════════════════════════════════════════
+
+🚀 CÓMO PROBAR (Paso a Paso):
+
+OPCIÓN 1: INICIAR APLICACIÓN COMPLETA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Terminal en la raíz del proyecto:
+   $ npm run dev
+
+2. Abre navegador:
+   http://localhost:5173
+
+3. Ve a /login e intenta iniciar sesión con:
+   Email: admin@contaall.com
+   Password: contaall
+
+4. Si no existe este usuario, crea uno:
+   $ npm run seed
+
+
+OPCIÓN 2: PROBAR LOGIN DESDE TERMINAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Terminal 1 - Inicia servidor:
+$ npm run server
+
+Terminal 2 - Prueba login:
+$ cd server
+$ node test-login.js admin@contaall.com contaall
+
+Expected output:
+✅ ¡Login exitoso!
+{
+  "token": "eyJhbGc...",
+  "user": {
+    "id": "...",
+    "email": "admin@contaall.com",
+    "full_name": "Administrador Sistema",
+    "role": "admin"
+  }
+}
+
+
+OPCIÓN 3: VERIFICAR BASE DE DATOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$ cd server
+$ node verify-db.js
+
+Expected output:
+✅ Conexión a la base de datos: EXITOSA
+👥 Usuarios registrados: 1
+✅ Todos los perfiles están vinculados a usuarios
+✅ Todos los roles están vinculados a usuarios
+
+════════════════════════════════════════════════════════════════════════════════
+
+🔍 DEBUGGING (Si aún hay problemas):
+
+1. ¿El servidor está corriendo?
+   $ curl http://localhost:8081/health
+   Expected: {"status":"ok"}
+
+2. ¿El cliente se conecta correctamente?
+   - Abre DevTools (F12)
+   - Ve a Network tab
+   - Intenta login
+   - Verifica que /api/auth/login vaya a http://localhost:8081/api/auth/login
+
+3. ¿El token se guardó?
+   - Consola: localStorage.getItem('auth_token')
+   - Debe devolver un string largo (JWT token)
+
+4. ¿La base de datos está bien?
+   $ cd server && node verify-db.js
+   - Verifica: conexión, tablas, usuarios, integridad
+
+5. ¿El endpoint de login funciona?
+   $ cd server && node test-login.js <email> <password>
+   - Prueba directa sin UI
+
+════════════════════════════════════════════════════════════════════════════════
+
+📊 VARIABLES DE ENTORNO:
+
+Frontend (.env):
+├─ VITE_API_URL="/api" ← PRINCIPAL CAMBIO
+├─ VITE_SUPABASE_PROJECT_ID (no usado actualmente)
+├─ VITE_SUPABASE_PUBLISHABLE_KEY (no usado actualmente)
+└─ VITE_SUPABASE_URL (no usado actualmente)
+
+Backend (server/.env):
+├─ DB_HOST=localhost
+├─ DB_USER=root
+├─ DB_PASSWORD= (vacío - sin contraseña)
+├─ DB_NAME=access_control_db
+├─ JWT_SECRET=access-control-hub-secret-2024
+└─ PORT=8081
+
+════════════════════════════════════════════════════════════════════════════════
+
+✅ VALIDACIONES COMPLETADAS:
+
+  ✓ Base de datos configurada correctamente
+  ✓ Tablas creadas con esquema adecuado
+  ✓ Relaciones de integridad referencial
+  ✓ Usuarios de prueba disponibles
+  ✓ Endpoint de login refactorizado
+  ✓ CORS configurado apropiadamente
+  ✓ URL de API correcta
+  ✓ Manejo de errores mejorado
+  ✓ Logging detallado agregado
+  ✓ Scripts de prueba disponibles
+
+════════════════════════════════════════════════════════════════════════════════
+
+🎯 PRÓXIMOS PASOS:
+
+1. Prueba: npm run dev
+2. Navega a: http://localhost:5173/login
+3. Ingresa credenciales (u corre npm run seed si no existen)
+4. Verifica que redirige a /dashboard
+5. Verifica que puedes navegar por la app
+
+════════════════════════════════════════════════════════════════════════════════
+
+💡 TIPS:
+
+- Si el registro funciona pero el login no: prueba con node test-login.js
+- Si el login en terminal funciona pero no en UI: verifica CORS en DevTools
+- Si nada funciona: revisa que el puerto 8081 no esté en uso
+- Para resetear: borra la DB y corre npm run seed nuevamente
+
+════════════════════════════════════════════════════════════════════════════════
