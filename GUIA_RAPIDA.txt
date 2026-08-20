@@ -160,9 +160,6 @@ Expected output:
 
 Frontend (.env):
 ├─ VITE_API_URL="/api" ← PRINCIPAL CAMBIO
-├─ VITE_SUPABASE_PROJECT_ID (no usado actualmente)
-├─ VITE_SUPABASE_PUBLISHABLE_KEY (no usado actualmente)
-└─ VITE_SUPABASE_URL (no usado actualmente)
 
 Backend (server/.env):
 ├─ DB_HOST=localhost

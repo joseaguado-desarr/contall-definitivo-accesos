@@ -2,7 +2,7 @@
 CREATE DATABASE IF NOT EXISTS access_control_db;
 USE access_control_db;
 
--- Table for users (replacing Supabase auth.users)
+-- Table for local SQL authentication
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(36) PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
