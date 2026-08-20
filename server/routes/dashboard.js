@@ -48,4 +48,133 @@ router.get('/recent', async (req, res) => {
   }
 });
 
+// Get Charts Data
+router.get('/charts', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().slice(0, 19).replace('T', ' ');
+
+    // 1. Hourly Flow Today
+    const [logsToday] = await pool.execute(`
+      SELECT direction, HOUR(created_at) as hour 
+      FROM access_logs 
+      WHERE created_at >= ?
+    `, [todayStr]);
+
+    const [visitsToday] = await pool.execute(`
+      SELECT HOUR(entry_time) as entry_hour, HOUR(exit_time) as exit_hour
+      FROM visits 
+      WHERE entry_time >= ?
+    `, [todayStr]);
+
+    const hourlyData = [];
+    for (let i = 6; i <= 22; i += 2) {
+      let entries = 0;
+      let exits = 0;
+      
+      logsToday.forEach(log => {
+        if (log.hour >= i && log.hour < i + 2) {
+          if (log.direction === 'entry') entries++;
+          if (log.direction === 'exit') exits++;
+        }
+      });
+      visitsToday.forEach(v => {
+        if (v.entry_hour !== null && v.entry_hour >= i && v.entry_hour < i + 2) entries++;
+        if (v.exit_hour !== null && v.exit_hour >= i && v.exit_hour < i + 2) exits++;
+      });
+
+      hourlyData.push({
+        hour: `${i.toString().padStart(2, '0')}:00`,
+        entries,
+        exits
+      });
+    }
+
+    // 2. Weekly Data (Last 7 days)
+    const [weeklyLogs] = await pool.execute(`
+      SELECT DATE(created_at) as date, COUNT(*) as count 
+      FROM access_logs 
+      WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+      GROUP BY DATE(created_at)
+    `);
+    const [weeklyVisits] = await pool.execute(`
+      SELECT DATE(entry_time) as date, COUNT(*) as count 
+      FROM visits 
+      WHERE entry_time >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+      GROUP BY DATE(entry_time)
+    `);
+
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const weeklyMap = new Map();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      weeklyMap.set(dateStr, { day: days[d.getDay()], accesses: 0 });
+    }
+
+    weeklyLogs.forEach(l => {
+      // The DB returns a Date object in js for DATE() if it uses certain config, or string. Handle both:
+      const lDate = l.date instanceof Date ? l.date : new Date(l.date);
+      const dateStr = lDate.toISOString().split('T')[0];
+      if (weeklyMap.has(dateStr)) weeklyMap.get(dateStr).accesses += l.count;
+    });
+    weeklyVisits.forEach(v => {
+      const vDate = v.date instanceof Date ? v.date : new Date(v.date);
+      const dateStr = vDate.toISOString().split('T')[0];
+      if (weeklyMap.has(dateStr)) weeklyMap.get(dateStr).accesses += v.count;
+    });
+    
+    const weeklyData = Array.from(weeklyMap.values());
+
+    // 3. Access Methods
+    const [methodStats] = await pool.execute(`
+      SELECT method, COUNT(*) as value
+      FROM access_logs
+      GROUP BY method
+    `);
+
+    const methodColors = {
+      manual: "hsl(220, 70%, 25%)",
+      qr: "hsl(199, 89%, 48%)",
+      facial: "hsl(142, 76%, 36%)",
+      card: "hsl(38, 92%, 50%)"
+    };
+
+    const methodLabels = {
+      facial: "Facial",
+      qr: "QR",
+      manual: "Manual",
+      card: "Tarjeta"
+    };
+
+    let accessMethodData = methodStats.map(m => ({
+      name: methodLabels[m.method] || m.method,
+      value: m.value,
+      color: methodColors[m.method] || "hsl(220, 15%, 45%)"
+    }));
+
+    if (accessMethodData.length === 0) {
+      accessMethodData = [{ name: "Manual", value: 1, color: "hsl(220, 70%, 25%)" }];
+    }
+
+    const totalMethods = accessMethodData.reduce((acc, curr) => acc + curr.value, 0);
+    const accessMethodDataWithPercentage = accessMethodData.map(m => ({
+      ...m,
+      percentage: Math.round((m.value / totalMethods) * 100)
+    }));
+
+    res.json({
+      hourly: hourlyData,
+      weekly: weeklyData,
+      methods: accessMethodDataWithPercentage
+    });
+
+  } catch (error) {
+    console.error('Error fetching charts:', error);
+    res.status(500).json({ error: 'Error fetching chart data' });
+  }
+});
+
 export default router;

@@ -46,35 +46,6 @@ interface RecentActivityItem {
   status: "authorized" | "denied" | "pending";
 }
 
-// ... chart data remains same ...
-const accessData = [
-  { hour: "06:00", entries: 12, exits: 5 },
-  { hour: "08:00", entries: 45, exits: 8 },
-  { hour: "10:00", entries: 28, exits: 15 },
-  { hour: "12:00", entries: 18, exits: 32 },
-  { hour: "14:00", entries: 22, exits: 12 },
-  { hour: "16:00", entries: 15, exits: 25 },
-  { hour: "18:00", entries: 8, exits: 48 },
-  { hour: "20:00", entries: 5, exits: 12 },
-];
-
-const weeklyData = [
-  { day: "Lun", accesses: 156 },
-  { day: "Mar", accesses: 142 },
-  { day: "Mié", accesses: 178 },
-  { day: "Jue", accesses: 165 },
-  { day: "Vie", accesses: 189 },
-  { day: "Sáb", accesses: 78 },
-  { day: "Dom", accesses: 45 },
-];
-
-const accessMethodData = [
-  { name: "Manual", value: 45, color: "hsl(220, 70%, 25%)" },
-  { name: "QR", value: 30, color: "hsl(199, 89%, 48%)" },
-  { name: "Facial", value: 20, color: "hsl(142, 76%, 36%)" },
-  { name: "Tarjeta", value: 5, color: "hsl(38, 92%, 50%)" },
-];
-
 const methodLabels: Record<string, string> = {
   facial: "Facial",
   qr: "QR",
@@ -94,10 +65,20 @@ export default function Dashboard() {
   const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>([]);
   const [activityLoading, setActivityLoading] = useState(true);
 
+  // States for real charts data
+  const [accessData, setAccessData] = useState<any[]>([]);
+  const [weeklyData, setWeeklyData] = useState<any[]>([]);
+  const [accessMethodData, setAccessMethodData] = useState<any[]>([]);
+
   const fetchStats = useCallback(async () => {
     try {
       const data = await apiClient.get("/dashboard/stats");
       setStats(data);
+      
+      const chartData = await apiClient.get("/dashboard/charts");
+      setAccessData(chartData.hourly || []);
+      setWeeklyData(chartData.weekly || []);
+      setAccessMethodData(chartData.methods || []);
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
@@ -299,7 +280,7 @@ export default function Dashboard() {
                 <div key={item.name} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-xs text-muted-foreground">
-                    {item.name} ({item.value}%)
+                    {item.name} ({item.percentage}%)
                   </span>
                 </div>
               ))}

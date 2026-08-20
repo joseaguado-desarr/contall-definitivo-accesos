@@ -1,0 +1,96 @@
+{
+  "generatedAt": "2026-08-19T23:12:16.884Z",
+  "durationMs": 48364,
+  "summary": {
+    "total": 17,
+    "passed": 17,
+    "failed": 0
+  },
+  "results": [
+    {
+      "name": "Registro de usuario",
+      "status": "passed",
+      "durationMs": 18572
+    },
+    {
+      "name": "Login administrativo",
+      "status": "passed",
+      "durationMs": 18925
+    },
+    {
+      "name": "Menú: Dashboard",
+      "status": "passed",
+      "durationMs": 19248
+    },
+    {
+      "name": "Menú: Personas",
+      "status": "passed",
+      "durationMs": 19727
+    },
+    {
+      "name": "Menú: Visitantes",
+      "status": "passed",
+      "durationMs": 19973
+    },
+    {
+      "name": "Menú: Control de Acceso",
+      "status": "passed",
+      "durationMs": 20377
+    },
+    {
+      "name": "Menú: Historial",
+      "status": "passed",
+      "durationMs": 20841
+    },
+    {
+      "name": "Menú: Reportes",
+      "status": "passed",
+      "durationMs": 21485
+    },
+    {
+      "name": "Menú: Usuarios",
+      "status": "passed",
+      "durationMs": 21920
+    },
+    {
+      "name": "Menú: Horarios",
+      "status": "passed",
+      "durationMs": 22190
+    },
+    {
+      "name": "Menú: Lista Negra",
+      "status": "passed",
+      "durationMs": 22588
+    },
+    {
+      "name": "Menú: Configuración",
+      "status": "passed",
+      "durationMs": 23197
+    },
+    {
+      "name": "Pantalla: Personas",
+      "status": "passed",
+      "durationMs": 23891
+    },
+    {
+      "name": "Pantalla: Visitantes",
+      "status": "passed",
+      "durationMs": 24594
+    },
+    {
+      "name": "Pantalla: Control de Acceso",
+      "status": "passed",
+      "durationMs": 25478
+    },
+    {
+      "name": "Pantalla: Historial",
+      "status": "passed",
+      "durationMs": 26451
+    },
+    {
+      "name": "Pantalla: Reportes",
+      "status": "passed",
+      "durationMs": 27333
+    }
+  ]
+}
