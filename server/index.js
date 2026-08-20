@@ -18,7 +18,13 @@ const PORT = process.env.PORT || 8081;
 
 // CORS configuration
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'],
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:8080',
+    'http://localhost:8081',
+    'https://tu-app-en-netlify.netlify.app'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
